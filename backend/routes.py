@@ -35,24 +35,37 @@ def count():
 ######################################################################
 @app.route("/picture", methods=["GET"])
 def get_pictures():
-    pass
+        return data
 
 ######################################################################
 # GET A PICTURE
 ######################################################################
-
-
-@app.route("/picture/<int:id>", methods=["GET"])
+@app.route("/picture/<int:id>", methods=["GET", "DELETE"])
 def get_picture_by_id(id):
-    pass
-
+    for picture in data:
+        if picture["id"] == str(id):
+            if request.method == "GET":
+                return {"id":{id}}
+            elif request.method == "DELETE":
+                data.remove(picture)
+                return f"DELETE: {id}"
+        return {"message": "Picture not found"}, 404
+        
 
 ######################################################################
 # CREATE A PICTURE
 ######################################################################
-@app.route("/picture", methods=["POST"])
+@app.route("/picture/<int:id>", methods=["POST"])
 def create_picture():
-    pass
+    new_picture = request.json
+    if not new_picture:
+        return {"message": "Invalid input parameter"}, 422
+    # code to validate new_picture ommited
+    try:
+        data.append(new_picture)
+    except NameError:
+        return {"message": "data not defined"}, 500
+    return {"message": f"picture with id {new_picture['id']}"}, 200
 
 ######################################################################
 # UPDATE A PICTURE
