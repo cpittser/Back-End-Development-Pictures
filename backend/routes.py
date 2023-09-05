@@ -10,8 +10,6 @@ data: list = json.load(open(json_url))
 ######################################################################
 # RETURN HEALTH OF THE APP
 ######################################################################
-
-
 @app.route("/health")
 def health():
     return jsonify(dict(status="OK")), 200
@@ -19,8 +17,6 @@ def health():
 ######################################################################
 # COUNT THE NUMBER OF PICTURES
 ######################################################################
-
-
 @app.route("/count")
 def count():
     """return length of data"""
@@ -42,43 +38,58 @@ def get_pictures():
 ######################################################################
 @app.route("/picture/<int:id>", methods=["GET", "DELETE"])
 def get_picture_by_id(id):
-    for picture in data:
-        if picture["id"] == str(id):
-            if request.method == "GET":
-                return {"id":{id}}
-            elif request.method == "DELETE":
-                data.remove(picture)
-                return f"DELETE: {id}"
-        return {"message": "Picture not found"}, 404
+    if data:
+        for img in data:
+            if (img["id"] == id):
+                return img, 200
+        return {"message": "Id not found"}, 404    
+    return {"message": "Internal server error"}, 500
         
 
 ######################################################################
 # CREATE A PICTURE
 ######################################################################
-@app.route("/picture/<int:id>", methods=["POST"])
+@app.route("/picture", methods=["POST"])
 def create_picture():
-    new_picture = request.json
-    if not new_picture:
-        return {"message": "Invalid input parameter"}, 422
-    # code to validate new_picture ommited
-    try:
-        data.append(new_picture)
-    except NameError:
-        return {"message": "data not defined"}, 500
-    return {"message": f"picture with id {new_picture['id']}"}, 200
+    resp = request.json
+    if resp:
+        for picture in data:
+            if (picture["id"] == resp['id']):
+                return {"Message": f"picture with id {picture['id']} already present"}, 302
+        data.append(resp)
+        return resp, 201
+    else:
+        return {"message": "Internal server error"}, 500
 
 ######################################################################
 # UPDATE A PICTURE
 ######################################################################
-
-
 @app.route("/picture/<int:id>", methods=["PUT"])
 def update_picture(id):
-    pass
+    response = request.json
+    if response:
+        for img in data:
+            if (img["id"] == id):
+                data[data.index(img)] = response
+                return {"message": "Success"}, 200
+        return {"message": "picture not found"}, 404
+    else:
+        return {"message": "Internal server error"}, 500
 
 ######################################################################
 # DELETE A PICTURE
 ######################################################################
 @app.route("/picture/<int:id>", methods=["DELETE"])
-def delete_picture(id):
-    pass
+def delete_picture_by_id(id):
+    for picture in data:
+        if picture["id"] == id:
+            data.remove(picture)
+            return "", 200
+    return {"message": "picture not found"}, 404
+
+#######################################################################
+# ERROR HANDLER
+#######################################################################
+@app.errorhandler(404)
+def api_not_found(error):
+    return {"message": "API not found"}, 404
